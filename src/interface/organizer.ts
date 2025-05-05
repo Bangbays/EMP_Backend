@@ -1,7 +1,7 @@
 // untuk daftar jadi organizer
 export interface OrganizerForm {
   organizationName: string;
-  email: string;
+  phone: string;
   address: string;
 }
 

@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "../utils/prisma";
 import { signToken } from "../utils/jwt";
 import { IRegister, ILogin, IResponse, UserProfile } from "../interface/auth";
+import { get } from "http";
 
 export async function register(payload: IRegister): Promise<IResponse> {
   const hashed = await bcrypt.hash(payload.password, 10);
@@ -10,11 +11,13 @@ export async function register(payload: IRegister): Promise<IResponse> {
       name: payload.name,
       email: payload.email,
       password: hashed,
-      referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      role: "USER", // Default role
+      referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
     },
   });
-
+  const token = signToken(user.id);
+  const profile = await getProfile(user.id);
+  return { accessToken: token, refreshToken: token, user: profile };
+  // pending
   // proses referral
   const accessToken = signToken(user.id);
   return { accessToken, refreshToken: accessToken };
