@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { EMAIL_HOST, EMAIL_PASS, EMAIL_PORT, EMAIL_USER } from "../config";
 
-export const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
   port: Number(EMAIL_PORT),
   auth: {

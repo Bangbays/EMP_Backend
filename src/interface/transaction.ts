@@ -14,6 +14,7 @@ export interface TransactionResponse {
     | "WaitingPayment"
     | "WaitingConfirmation"
     | "Done"
+    | "Rejected"
     | "Expired"
     | "Canceled";
   totalPrice: number;
