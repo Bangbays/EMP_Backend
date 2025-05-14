@@ -8,95 +8,67 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  CUSTOMER
+  ORGANIZER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id               String             @id @default(uuid())
-  name             String
-  email            String             @unique
-  password         String
-  role             String
-  referralCode     String             @unique
-  points           Int                @default(0)
-  pointsExpiry     DateTime?
-  transactions     Transaction[]
-  eventsCreated    Event[]            @relation("OrganizerEvents")
-  Review           Review[]
-  OrganizerRequest OrganizerRequest[]
-}
-
-model OrganizerRequest {
-  id               String   @id @default(uuid())
-  user             User     @relation(fields: [userId], references: [id])
-  userId           String
-  organizationName String
-  email            String
-  address          String
-  status           String   @default("pending") // pending | approved | rejected
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
-model Event {
-  id          String        @id @default(uuid())
-  name        String
-  type        String
-  location    String
-  startDate   DateTime
-  endDate     DateTime
-  description String?
-  imageURL    String?
-  organizer   User          @relation("OrganizerEvents", fields: [organizerId], references: [id])
-  organizerId String
-  ticketTypes TicketType[]
-  reviews     Review[]
-  Voucher     Voucher[]
-  Transaction Transaction[]
-}
-
-model TicketType {
-  id           String        @id @default(uuid())
-  event        Event         @relation(fields: [eventId], references: [id])
-  eventId      String
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String
   name         String
-  price        Int
-  quota        Int
-  transactions Transaction[]
+  role         Role               @default(CUSTOMER)
+  referralCode String?            @unique
+  referredById String?
+  referredBy   User?              @relation("UserReferral", fields: [referredById], references: [id], onDelete: Cascade)
+  referrals    User[]             @relation("UserReferral")
+  points       Int                @default(0)
+  vouchers     Voucher[]
+  organizer    OrganizerProfile?
+  pointsLogs   PointTransaction[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([role])
+}
+
+model OrganizerProfile {
+  id        String         @id @default(cuid())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String         @unique
+  orgName   String
+  orgDetail String
+  status    ApprovalStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model Voucher {
-  code      String        @id
-  event     Event         @relation(fields: [eventId], references: [id])
-  eventId   String
-  discount  Int
-  startDate DateTime
-  endDate   DateTime
-  usedBy    Transaction[]
+  id         String   @id @default(cuid())
+  code       String   @unique
+  discount   Int
+  validForm  DateTime
+  validUntil DateTime
+  used       Boolean  @default(false)
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId    String
+  createdAt  DateTime @default(now())
+
+  @@index([validUntil])
 }
 
-model Transaction {
-  id              String     @id @default(uuid())
-  user            User       @relation(fields: [userId], references: [id])
-  userId          String
-  event           Event      @relation(fields: [eventId], references: [id])
-  eventId         String
-  ticketType      TicketType @relation(fields: [ticketTypeId], references: [id])
-  ticketTypeId    String
-  quantity        Int
-  totalPrice      Int
-  status          String
-  createdAt       DateTime   @default(now())
-  expiresAt       DateTime
-  paymentProofUrl String?
-  Voucher         Voucher?   @relation(fields: [voucherCode], references: [code])
-  voucherCode     String?
-}
-
-model Review {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
+model PointTransaction {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  event     Event    @relation(fields: [eventId], references: [id])
-  eventId   String
-  rating    Int
-  comment   String?
+  amount    Int
+  type      String
   createdAt DateTime @default(now())
 }
