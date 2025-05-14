@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
+enum UserRole {
   CUSTOMER
   ORGANIZER
 }
@@ -20,21 +20,22 @@ enum ApprovalStatus {
 }
 
 model User {
-  id           String             @id @default(cuid())
-  email        String             @unique
-  passwordHash String
-  name         String
-  role         Role               @default(CUSTOMER)
-  referralCode String?            @unique
-  referredById String?
-  referredBy   User?              @relation("UserReferral", fields: [referredById], references: [id], onDelete: Cascade)
-  referrals    User[]             @relation("UserReferral")
-  points       Int                @default(0)
-  vouchers     Voucher[]
-  organizer    OrganizerProfile?
-  pointsLogs   PointTransaction[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id             String             @id @default(cuid())
+  email          String             @unique
+  passwordHash   String
+  name           String
+  role           UserRole           @default(CUSTOMER)
+  referralCode   String?            @unique
+  referredByCode String?
+  referredById   String?
+  referredBy     User?              @relation("UserReferral", fields: [referredById], references: [id], onDelete: Cascade)
+  referrals      User[]             @relation("UserReferral")
+  points         Int                @default(0)
+  vouchers       Voucher[]
+  organizer      OrganizerProfile?
+  pointsLogs     PointTransaction[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([role])
 }
