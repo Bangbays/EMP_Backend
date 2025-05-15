@@ -30,6 +30,20 @@ enum CouponStatus {
   USED
 }
 
+enum TransactionStatus {
+  WAITING_PAYMENT
+  WAITING_CONFIRMATION
+  DONE
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum EventType {
+  ONLINE
+  OFFLINE
+}
+
 model User {
   id             String            @id @default(cuid())
   email          String            @unique
@@ -41,15 +55,17 @@ model User {
   referralCode   String?           @unique
   referredByCode String?
   referredById   String?
-  referredBy     User?             @relation("UserReferral", fields: [referredById], references: [id], onDelete: Cascade)
+  referredBy     User?             @relation("UserReferral", fields: [referredById], references: [id])
   referrals      User[]            @relation("UserReferral")
   points         Int               @default(0)
   vouchers       Voucher[]
   organizer      OrganizerProfile?
+  transactions   Transaction[]
   pointsHistory  PointHistory[]
   coupons        Coupon[]
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+  Review         Review[]
 
   @@index([role])
 }
@@ -63,6 +79,61 @@ model OrganizerProfile {
   status    ApprovalStatus @default(PENDING)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  Event     Event[]
+}
+
+model Event {
+  id             String           @id @default(cuid())
+  title          String
+  type           EventType
+  description    String?
+  location       String
+  startDate      DateTime
+  endDate        DateTime
+  availableSeats Int
+  price          Int
+  organizer      OrganizerProfile @relation(fields: [organizerId], references: [id])
+  organizerId    String
+  transaction    Transaction[]
+  reviews        Review[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizerId])
+  @@index([startDate, endDate])
+}
+
+model Transaction {
+  id         String            @id @default(cuid())
+  user       User              @relation(fields: [userId], references: [id])
+  userId     String
+  event      Event             @relation(fields: [eventId], references: [id])
+  eventId    String
+  quantity   Int               @default(1)
+  totalPrice Int
+  status     TransactionStatus @default(WAITING_PAYMENT)
+  proofUrl   String?
+  voucherId  String?
+  coupon     Coupon?           @relation(fields: [voucherId], references: [id])
+  pointsUsed Int?              @default(0)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([eventId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
 }
 
 model Voucher {
@@ -72,7 +143,7 @@ model Voucher {
   validForm  DateTime
   validUntil DateTime
   used       Boolean  @default(false)
-  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner      User     @relation(fields: [ownerId], references: [id])
   ownerId    String
   createdAt  DateTime @default(now())
 
@@ -81,7 +152,7 @@ model Voucher {
 
 model PointHistory {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
   userId    String
   points    Int
   type      String   @default("CREDIT")
@@ -90,12 +161,14 @@ model PointHistory {
 }
 
 model Coupon {
-  id             String   @id @default(cuid())
-  code           String   @unique
+  id             String        @id @default(cuid())
+  code           String        @unique
   discountAmount Int
-  user           User     @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
   userId         String
-  isUsed         Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  status         CouponStatus  @default(ACTIVE)
+  isUsed         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
   expiresAt      DateTime
+  Transaction    Transaction[]
 }

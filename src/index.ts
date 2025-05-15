@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.route";
 import referralRouter from "./routes/referral.routes";
 import voucherRouter from "./routes/voucher.route";
 import profileRouter from "./routes/profile.routes";
+import organizerRouter from "./routes/organizer.route";
 
 const port = PORT || 8080;
 const app: Application = express();
@@ -18,6 +19,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/referral", referralRouter);
 app.use("/api", voucherRouter);
 app.use("/profile", profileRouter);
+app.use("/api/organizer", organizerRouter);
 
 app.listen(port, () => {
   console.log(`Server dimulai di port ${port}`);

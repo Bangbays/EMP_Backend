@@ -1,10 +1,11 @@
-import { Response, NextFunction } from "express";
-import { AuthRequest } from "./auth.middleware";
+import { RequestHandler } from "express";
 
 export const authorize =
-  (roles: string[]) =>
-  (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role))
-      return res.status(403).json({ message: "Access denied" });
+  (roles: string[]): RequestHandler =>
+  (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
     next();
   };
