@@ -12,3 +12,9 @@ export interface ILogin {
   email: string;
   password: string;
 }
+
+export interface IUserPayload {
+  id: string;
+  email: string;
+  role: "CUSTOMER" | "ORGANIZER";
+}
